@@ -17,6 +17,14 @@ use Google\Service\Drive\DriveFile;
 use Google\Http\MediaFileUpload;
 use Google_Client;
 use Google_Service_Oauth2;
+use Cake\Mailer\Email;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
+require 'D:\Website_Project\CakePhP\google_drive_api\vendor\phpmailer\phpmailer\src\Exception.php';
+require 'D:\Website_Project\CakePhP\google_drive_api\vendor\phpmailer\phpmailer\src\PHPMailer.php';
+require 'D:\Website_Project\CakePhP\google_drive_api\vendor\phpmailer\phpmailer\src\SMTP.php';
 session_start();
 
 /**
@@ -72,14 +80,14 @@ class DriveTable extends Table
         $client->setAuthConfig(__DIR__.'/client_secret.json');
         $client->setAccessType('offline');
         $client->setPrompt('select_account consent');
-        $client->setRedirectUri('http://tien-google-drive-api.com.vn:8080/Google/index');
         $authUrl = $client->createAuthUrl();
         
         return $client;
     }
     public function Connect($client)
     {
-        if (isset($_GET['code'])) {
+        if(isset($_GET['code']))
+        {
             $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
             $client->setAccessToken($token);
             $user_info = $client->verifyIdToken();
@@ -98,6 +106,7 @@ class DriveTable extends Table
             if($this->save($new_token))
             {
                 $this->Access_Token($client);
+                return $new_token;
             }
         }
     }
@@ -116,7 +125,7 @@ class DriveTable extends Table
                 'created' => $get_token['created'],
             ];
             $client->setAccessToken($token);
-            return $token;
+            return $get_token;
         }
     }
 
@@ -144,4 +153,53 @@ class DriveTable extends Table
         }
         return $id_images;
     }
+    public function Gmail()
+    {
+        $Email = new Email('gmail');
+        $Email->setEmailFormat('html'); 
+        $Email->setTo('tientphp2001@gmail.com');
+        $Email->setSubject('Testing the emails');
+        
+        $Email->setViewVars(array('first_name'=>'John Doe' ));//variable will be replaced from template
+        // dd($Email);
+        $Email->send('Hi did you receive the mail');
+    }
+    public function SendEmail()
+    {
+        $mail = new PHPMailer(true);
+        $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+        $mail->isSMTP();                                        //Send using SMTP
+        $mail->Host       = 'smtp.gmail.com';                     //Set the SMTP server to send through
+        $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
+        $mail->Username   = 'tient2365@gmail.com';                     //SMTP username
+        $mail->Password   = 'tlfifvwizfxciues';                               //SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            //Enable implicit TLS encryption
+        $mail->Port       = 465;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
+
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ),
+            'tls' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );    
+        //Recipients
+        $mail->setFrom('tient2365@gmail.com', 'Mailer');
+        $mail->addAddress('tientphp2001@gmail.com', 'Joe User');     //Add a recipient
+        $mail->addAddress('tientphp2001@gmail.com');               //Name is optional
+        $mail->addReplyTo('tient2365@gmail.com', 'Information');
+
+        //Content
+        $mail->isHTML(true);                                  //Set email format to HTML
+        $mail->Subject = 'Here is the subject';
+        $mail->Body    = 'This is the HTML message body <b>in bold!</b>';
+
+        $mail->send();
+    }
+
 }

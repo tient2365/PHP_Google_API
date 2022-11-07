@@ -35,6 +35,8 @@ class GoogleController extends AppController
         $query = $this->request->getQuery();
         $client = $this->m_drive->authUrl();
         $connect = $this->m_drive->Access_Token($client);
+        // $send_email = $this->m_drive->SendEmail();
+        $send_email = $this->m_drive->Gmail();
         if(empty($connect))
         {
             $connect = $this->m_drive->Connect($client);
